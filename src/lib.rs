@@ -2,15 +2,15 @@ use proc_macro_helpers::global_variables::hardcode::ERROR_ENUM_NAME;
 use proc_macro_helpers::global_variables::hardcode::ORIGIN_NAME;
 use proc_macro_helpers::global_variables::hardcode::WRAPPER_NAME;
 
-#[proc_macro_derive(ImplGetWhereWasOriginOrWrapperWithMethodFromTufaCommon)]
-pub fn derive_impl_get_where_was_origin_or_wrapper_with_method_from_tufa_common(
+#[proc_macro_derive(ImplGetWhereWasOriginOrWrapperFromTufaCommon)]
+pub fn derive_impl_get_where_was_origin_or_wrapper_from_tufa_common(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     generate(input, proc_macro_helpers::path::Path::TufaCommon)
 }
 
-#[proc_macro_derive(ImplGetWhereWasOriginOrWrapperWithMethodFromCrate)]
-pub fn derive_impl_get_where_was_origin_or_wrapper_with_method_from_crate(
+#[proc_macro_derive(ImplGetWhereWasOriginOrWrapperFromCrate)]
+pub fn derive_impl_get_where_was_origin_or_wrapper_from_crate(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     generate(input, proc_macro_helpers::path::Path::Crate)
@@ -20,8 +20,8 @@ fn generate(
     input: proc_macro::TokenStream,
     path: proc_macro_helpers::path::Path,
 ) -> proc_macro::TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input)
-        .expect("ImplGetWhereWasOriginOrWrapperWithMethod syn::parse(input) failed");
+    let ast: syn::DeriveInput =
+        syn::parse(input).expect("ImplGetWhereWasOriginOrWrapper syn::parse(input) failed");
     let ident = &ast.ident;
     let get_where_was_one_or_many_token_stream =
         format!("{path}::traits::get_where_was_one_or_many::GetWhereWasOriginOrWrapper")
@@ -37,34 +37,15 @@ fn generate(
             .expect("path parse failed");
     match ast.data {
         syn::Data::Union(_) => {
-            panic!("ImplGetWhereWasOriginOrWrapperWithMethod only work on structs!")
+            panic!("ImplGetWhereWasOriginOrWrapper only work on structs!")
         }
         syn::Data::Enum(data_enum) => {
             let variants = data_enum.variants.into_iter().map(|v| {
                 let variant_ident = v.ident;
-                // let ident_as_string = variant_ident.to_string();
-                // let is_wrapper = if ident_as_string.contains(WRAPPER_NAME)
-                //     && ident_as_string.contains(ORIGIN_NAME)
-                // {
-                //     panic!(
-                //         "ImplGetSource - ident name {} contains {} and {}",
-                //         ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                //     );
-                // } else if ident_as_string.contains(WRAPPER_NAME) {
-                //     true
-                // } else if ident_as_string.contains(ORIGIN_NAME) {
-                //     false
-                // } else {
-                //     panic!(
-                //         "ImplGetSource - ident name {} does not contain {} or {}",
-                //         ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                //     );
-                // };
-                //
                 match v.fields {
                     syn::Fields::Unit => {
                         panic!(
-                            "ImplGetWhereWasOriginOrWrapperWithMethod still not work with syn::Fields::Unit"
+                            "ImplGetWhereWasOriginOrWrapper still not work with syn::Fields::Unit"
                         )
                     }
                     syn::Fields::Named(fields_named) => {
@@ -155,9 +136,9 @@ fn generate(
                         syn::Fields::Named(fields_named) => {
                             match fields_named.named.len() {
                                 2 => {
-                                    let source_field_ident = fields_named.named[0].ident.clone().expect("ImplGetWhereWasOriginOrWrapperWithMethod - there is no first field ident!");
+                                    let source_field_ident = fields_named.named[0].ident.clone().expect("ImplGetWhereWasOriginOrWrapper - there is no first field ident!");
                                     if format!("{}", source_field_ident) != *"source" {
-                                        panic!("ImplGetWhereWasOriginOrWrapperWithMethod - no 'source'-named field found!");
+                                        panic!("ImplGetWhereWasOriginOrWrapper - no 'source'-named field found!");
                                     }
                                     match fields_named.named[0].ty.clone() {
                                         syn::Type::Path(type_path) => {
@@ -265,17 +246,19 @@ fn generate(
                                                         },
                                                     }
                                                 }
-                                                _ => panic!("ImplGetWhereWasOriginOrWrapperWithMethod only work with type_path.path.segments.len() == 1!"),
+                                                _ => panic!("ImplGetWhereWasOriginOrWrapper only work with type_path.path.segments.len() == 1!"),
                                             }
                                         },
-                                        _ => panic!("ImplGetWhereWasOriginOrWrapperWithMethod only work on Type::Path!")
+                                        _ => panic!("ImplGetWhereWasOriginOrWrapper only work on Type::Path!")
                                     }
                                 }
-                                _ => panic!("ImplGetWhereWasOriginOrWrapperWithMethod only work on structs with 2 named fields!")
+                                _ => panic!("ImplGetWhereWasOriginOrWrapper only work on structs with 2 named fields!")
                             }
                         }
                         _ => {
-                            panic!("ImplGetWhereWasOriginOrWrapperWithMethod only work with syn::Fields::Named!")
+                            panic!(
+                                "ImplGetWhereWasOriginOrWrapper only work with syn::Fields::Named!"
+                            )
                         }
                     }
                 }
