@@ -42,47 +42,84 @@ fn generate(
         syn::Data::Enum(data_enum) => {
             let variants = data_enum.variants.into_iter().map(|v| {
                 let variant_ident = v.ident;
-                match v.fields {
-                    syn::Fields::Unit => {
-                        panic!(
-                            "ImplGetWhereWasOriginOrWrapper still not work with syn::Fields::Unit"
-                        )
-                    }
-                    syn::Fields::Named(fields_named) => {
-                        let fields_idents = fields_named.named.iter().map(|field| {
-                            let field_ident = field
-                                .ident
-                                .clone()
-                                .expect("some of named fields doesnt have ident");
-                            quote::quote! { #field_ident }
-                        });
-                        let where_was_one_or_many_vec = fields_named.named.iter().map(|field| {
-                            let field_ident = field
-                                .ident
-                                .clone()
-                                .expect("some of named fields doesnt have ident");
-                            quote::quote! {
-                                #field_ident
-                                .get_where_was_one_or_many()
-                                .into_vec()
-                                .into_iter()
-                                .for_each(|w| {
-                                    vec.push(w);
+                let ident_as_string = variant_ident.to_string();
+                let is_wrapper = if ident_as_string.contains(WRAPPER_NAME)
+                    && ident_as_string.contains(ORIGIN_NAME)
+                {
+                    panic!(
+                        "ImplGetSource - ident name {} contains {} and {}",
+                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
+                    );
+                } else if ident_as_string.contains(WRAPPER_NAME) {
+                    true
+                } else if ident_as_string.contains(ORIGIN_NAME) {
+                    false
+                } else {
+                    panic!(
+                        "ImplGetSource - ident name {} does not contain {} or {}",
+                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
+                    );
+                };
+                match is_wrapper {
+                    true => match v.fields {
+                        syn::Fields::Unit => {
+                            panic!("ImplGetWhereWasOriginOrWrapper still not work with syn::Fields::Unit")
+                        }
+                        syn::Fields::Named(fields_named) => {
+                            let fields_idents = fields_named.named.iter().map(|field| {
+                                let field_ident = field
+                                    .ident
+                                    .clone()
+                                    .expect("some of named fields doesnt have ident");
+                                quote::quote! { #field_ident }
+                            });
+                            let where_was_one_or_many_vec =
+                                fields_named.named.iter().map(|field| {
+                                    let field_ident = field
+                                        .ident
+                                        .clone()
+                                        .expect("some of named fields doesnt have ident");
+                                    quote::quote! {
+                                        #field_ident
+                                        .get_where_was_one_or_many()
+                                        .into_vec()
+                                        .into_iter()
+                                        .for_each(|w| {
+                                            vec.push(w);
+                                        });
+                                    }
                                 });
-                            }
-                        });
-                        quote::quote! {
-                            #ident::#variant_ident{
-                                #(#fields_idents,)*
-                            } => {
-                                let mut vec = Vec::new();
-                                #(#where_was_one_or_many_vec)*
-                                WhereWasOriginOrWrapper::Many(vec)
+                            quote::quote! {
+                                #ident::#variant_ident{
+                                    #(#fields_idents,)*
+                                } => {
+                                    let mut vec = Vec::new();
+                                    #(#where_was_one_or_many_vec)*
+                                    WhereWasOriginOrWrapper::Many(vec)
+                                }
                             }
                         }
-                    }
-                    syn::Fields::Unnamed(_) => quote::quote! {
-                        #ident::#variant_ident(e) => e.get_where_was_one_or_many()
+                        syn::Fields::Unnamed(_) => quote::quote! {
+                            #ident::#variant_ident(e) => e.get_where_was_one_or_many()
+                        },
+                    },
+                    false => match v.fields {
+                        syn::Fields::Unit => {
+                            panic!("ImplGetWhereWasOriginOrWrapper still not work with syn::Fields::Unit")
+                        }
+                        syn::Fields::Named(fields_named) => {
+                            let fields_idents = fields_named.named.iter().map(|_| {
+                                quote::quote! { _ }
+                            });
+                            quote::quote! {
+                                #ident::#variant_ident{
+                                    #(#fields_idents,)*
+                                } => #where_was_one_or_many_token_stream::None
+                            }
+                        }
+                        syn::Fields::Unnamed(_) => quote::quote! {
+                            #ident::#variant_ident(_) => #where_was_one_or_many_token_stream::None
+                        },
                     },
                 }
             });
