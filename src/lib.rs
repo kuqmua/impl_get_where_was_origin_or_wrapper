@@ -182,7 +182,7 @@ fn generate(
                                             match type_path.path.segments.len() {
                                                 1 => {
                                                     let possible_vec_or_hashmap_ident_as_string = format!("{}", type_path.path.segments[0].ident);
-                                                    match ident_as_string.contains(ERROR_ENUM_NAME) {
+                                                    match possible_vec_or_hashmap_ident_as_string.contains(ERROR_ENUM_NAME) {
                                                         true => {
                                                             if possible_vec_or_hashmap_ident_as_string == *"Vec" {
                                                                 let gen = quote::quote! {
